@@ -1,102 +1,143 @@
-import express from 'express';
-import { body, query } from 'express-validator';
-import { authenticateToken, requireRole } from '../middleware/auth.middleware';
-import { UserRole } from '../types/user.types';
-import {
-  createProduct,
-  getProducts,
-  getProductById,
-  updateProduct,
-  deleteProduct
-} from '../controllers/product.controller';
+import { Router } from 'express';
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/product.controller';
+import { authenticateToken, authorizeRole } from '../middleware/auth.middleware';
+import { UserRole } from '../models/user.model';
 
-const router = express.Router();
+const router = Router();
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Products
+ *     description: Product management
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *         category:
+ *           type: string
+ *         stock:
+ *           type: number
+ *         imageUrl:
+ *           type: string
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
 
 /**
  * @swagger
  * /api/products:
  *   get:
- *     tags:
- *       - Products
  *     summary: Get all products
- *     description: Retrieve products with filtering and pagination
+ *     tags: [Products]
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           minimum: 1
- *           default: 1
+ *         description: Page number for pagination (default 1)
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 10
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *       - in: query
- *         name: minPrice
- *         schema:
- *           type: number
- *       - in: query
- *         name: maxPrice
- *         schema:
- *           type: number
+ *         description: Number of products per page (default 10)
  *       - in: query
  *         name: name
  *         schema:
  *           type: string
+ *         description: Filter by product name (partial match)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price
  *     responses:
  *       200:
  *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
  */
-router.get(
-  '/',
-  [
-    query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 }),
-    query('minPrice').optional().isFloat({ min: 0 }),
-    query('maxPrice').optional().isFloat({ min: 0 }),
-    query('category').optional().isString(),
-    query('name').optional().isString()
-  ],
-  getProducts
-);
 
 /**
  * @swagger
  * /api/products/{id}:
  *   get:
- *     tags:
- *       - Products
  *     summary: Get product by ID
+ *     tags: [Products]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: The product ID
  *     responses:
  *       200:
  *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
  *       404:
  *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
+
+router.get('/', getProducts);
+
 router.get('/:id', getProductById);
 
 /**
  * @swagger
  * /api/products:
  *   post:
- *     tags:
- *       - Products
  *     summary: Create a new product
+ *     tags: [Products]
  *     security:
- *       - bearerAuth: []
+ *       - Auth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -105,9 +146,10 @@ router.get('/:id', getProductById);
  *             type: object
  *             required:
  *               - name
- *               - description
  *               - price
+ *               - description
  *               - category
+ *               - stock
  *             properties:
  *               name:
  *                 type: string
@@ -117,42 +159,50 @@ router.get('/:id', getProductById);
  *                 type: number
  *               category:
  *                 type: string
+ *               stock:
+ *                 type: number
+ *               imageUrl:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Product created successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 product:
+ *                   $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Error creating product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.post(
-  '/',
-  authenticateToken,
-  requireRole([UserRole.ADMIN]),
-  [
-    body('name').trim().notEmpty(),
-    body('description').trim().notEmpty(),
-    body('price').isFloat({ min: 0 }),
-    body('category').trim().notEmpty()
-  ],
-  createProduct
-);
+
+router.post('/', authenticateToken, authorizeRole([UserRole.ADMIN]), createProduct);
 
 /**
  * @swagger
  * /api/products/{id}:
  *   put:
- *     tags:
- *       - Products
- *     summary: Update a product
+ *     summary: Update product
+ *     tags: [Products]
  *     security:
- *       - bearerAuth: []
+ *       - Auth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: The product ID
  *     requestBody:
  *       required: true
  *       content:
@@ -168,59 +218,89 @@ router.post(
  *                 type: number
  *               category:
  *                 type: string
+ *               stock:
+ *                 type: number
+ *               imageUrl:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Product updated successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 product:
+ *                   $ref: '#/components/schemas/Product'
  *       404:
  *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error updating product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.put(
-  '/:id',
-  authenticateToken,
-  requireRole([UserRole.ADMIN]),
-  [
-    body('name').optional().trim().notEmpty(),
-    body('description').optional().trim().notEmpty(),
-    body('price').optional().isFloat({ min: 0 }),
-    body('category').optional().trim().notEmpty()
-  ],
-  updateProduct
-);
+
+router.put('/:id', authenticateToken, authorizeRole([UserRole.ADMIN]), updateProduct);
 
 /**
  * @swagger
  * /api/products/{id}:
  *   delete:
- *     tags:
- *       - Products
- *     summary: Delete a product
+ *     summary: Delete product
+ *     tags: [Products]
  *     security:
- *       - bearerAuth: []
+ *       - Auth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: The product ID
  *     responses:
  *       200:
  *         description: Product deleted successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error deleting product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.delete(
-  '/:id',
-  authenticateToken,
-  requireRole([UserRole.ADMIN]),
-  deleteProduct
-);
+
+router.delete('/:id', authenticateToken, authorizeRole([UserRole.ADMIN]), deleteProduct);
 
 export default router; 

@@ -1,17 +1,34 @@
-import express from 'express';
-import { body } from 'express-validator';
+import { Router } from 'express';
 import { register, login } from '../controllers/auth.controller';
 
-const router = express.Router();
+const router = Router();
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AuthUser:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         email:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         role:
+ *           type: string
+ */
 
 /**
  * @swagger
  * /api/auth/register:
  *   post:
- *     tags:
- *       - Authentication
  *     summary: Register a new user
- *     description: Create a new user account
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -21,46 +38,89 @@ const router = express.Router();
  *             required:
  *               - email
  *               - password
- *               - name
+ *               - firstName
+ *               - lastName
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
+ *                 example: user@example.com
  *               password:
  *                 type: string
- *                 minLength: 6
- *               name:
+ *                 format: password
+ *                 example: mySecurePassword123
+ *               firstName:
  *                 type: string
- *               role:
+ *                 example: John
+ *               lastName:
  *                 type: string
- *                 enum: [user, admin]
+ *                 example: Doe
  *     responses:
  *       201:
- *         description: User successfully registered
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User registered successfully
+ *                 token:
+ *                   type: string
+ *                   example: your_jwt_token_here
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       example: 60c72b2f5f9ec916c8b0c5b3
+ *                     email:
+ *                       type: string
+ *                       example: user@example.com
+ *                     firstName:
+ *                       type: string
+ *                       example: John
+ *                     lastName:
+ *                       type: string
+ *                       example: Doe
+ *                     role:
+ *                       type: string
+ *                       example: USER
  *       400:
- *         description: Invalid input data
- *       409:
- *         description: Email already exists
+ *         description: User already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User already exists
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error registering user
+ *                 error:
+ *                   type: object
+ *                   example: {}
  */
-router.post(
-  '/register',
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-    body('name').trim().notEmpty(),
-    body('role').optional().isIn(['user', 'admin'])
-  ],
-  register
-);
+
+router.post('/register', register);
 
 /**
  * @swagger
  * /api/auth/login:
  *   post:
- *     tags:
- *       - Authentication
  *     summary: Login user
- *     description: Authenticate user and return JWT token
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -73,7 +133,6 @@ router.post(
  *             properties:
  *               email:
  *                 type: string
- *                 format: email
  *               password:
  *                 type: string
  *     responses:
@@ -84,20 +143,32 @@ router.post(
  *             schema:
  *               type: object
  *               properties:
+ *                 message:
+ *                   type: string
  *                 token:
  *                   type: string
  *                 user:
- *                   type: object
+ *                   $ref: '#/components/schemas/AuthUser'
  *       401:
  *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error logging in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-router.post(
-  '/login',
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty()
-  ],
-  login
-);
+
+router.post('/login', login);
 
 export default router; 

@@ -1,102 +1,111 @@
-# Express TypeScript API with MongoDB
+# E-commerce API
 
-A RESTful API built with Express.js, TypeScript, and MongoDB, featuring authentication, role-based access control, and comprehensive CRUD operations.
+A RESTful API built with Express.js, TypeScript, and MongoDB.
 
 ## Features
 
-- 🔐 Bearer Token Authentication
-- 👥 Role-Based Access Control (Admin/User)
-- 📝 CRUD Operations
-- 🔍 Advanced Filtering (category, price band, name, etc.)
-- 📄 Pagination
-- 📚 Swagger Documentation
-- 🗄️ MongoDB Integration
-- ✨ TypeScript Support
+- Bearer token authentication
+- Role-based access control (Admin/User)
+- CRUD operations for products and users
+- Product filtering
+- Pagination support
+- Swagger API documentation
+- MongoDB integration
+- TypeScript support
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- MongoDB
+- MongoDB (v4.4 or higher)
 - npm or yarn
 
-## Setup
+## Installation
 
 1. Clone the repository:
-\`\`\`bash
-git clone <your-repo-url>
-cd express-ts-api
-\`\`\`
+```bash
+git clone <repository-url>
+cd ecommerce-api
+```
 
 2. Install dependencies:
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
-3. Create a .env file in the root directory:
-\`\`\`
+3. Create a `.env` file in the root directory with the following variables:
+```
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/your-database
+MONGODB_URI=mongodb://localhost:27017/ecommerce
 JWT_SECRET=your-secret-key
-\`\`\`
+JWT_EXPIRES_IN=24h
+NODE_ENV=development
+```
 
 4. Start the development server:
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 ## API Documentation
 
-Once the server is running, you can access the Swagger documentation at:
-\`http://localhost:3000/api-docs\`
-
-## Available Scripts
-
-- \`npm run dev\`: Start development server
-- \`npm run build\`: Build for production
-- \`npm start\`: Start production server
-- \`npm run lint\`: Run ESLint
-- \`npm test\`: Run tests
-
-## Project Structure
-
-\`\`\`
-src/
-├── config/         # Configuration files
-├── controllers/    # Request handlers
-├── middleware/     # Custom middleware
-├── models/        # Mongoose models
-├── routes/        # Route definitions
-├── services/      # Business logic
-├── types/         # TypeScript type definitions
-├── utils/         # Utility functions
-└── index.ts       # Application entry point
-\`\`\`
+The API documentation is available at `/api-docs` when the server is running. It provides detailed information about all available endpoints, request/response formats, and authentication requirements.
 
 ## API Endpoints
 
 ### Authentication
-- POST /api/auth/register
-- POST /api/auth/login
-
-### Users
-- GET /api/users (Admin only)
-- GET /api/users/:id
-- PUT /api/users/:id
-- DELETE /api/users/:id (Admin only)
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
 
 ### Products
-- GET /api/products
-- POST /api/products (Admin only)
-- GET /api/products/:id
-- PUT /api/products/:id (Admin only)
-- DELETE /api/products/:id (Admin only)
+- `GET /api/products` - Get all products (with filtering and pagination)
+- `GET /api/products/:id` - Get product by ID
+- `POST /api/products` - Create a new product (Admin only)
+- `PUT /api/products/:id` - Update a product (Admin only)
+- `DELETE /api/products/:id` - Delete a product (Admin only)
+
+### Users
+- `GET /api/users` - Get all users (Admin only)
+- `GET /api/users/:id` - Get user by ID
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user (Admin only)
+
+## Project Structure
+
+```
+src/
+├── config/         # Configuration files
+├── controllers/    # Route controllers
+├── middleware/     # Custom middleware
+├── models/         # Mongoose models
+├── routes/         # API routes
+├── utils/          # Utility functions
+└── server.ts       # Application entry point
+```
+
+## Development
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build TypeScript files
+- `npm start` - Start production server
+- `npm test` - Run tests
+
+## Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- Rate limiting
+- Helmet for security headers
+- CORS protection
 
 ## Contributing
 
-1. Create a new branch
-2. Make your changes
-3. Submit a pull request
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT 
+This project is licensed under the MIT License - see the LICENSE file for details. 

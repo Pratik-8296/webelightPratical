@@ -1,18 +1,24 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IProduct } from '../types/product.types';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IProductDocument extends IProduct, Document {}
+export interface IProduct extends Document {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  imageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const productSchema = new Schema<IProductDocument>({
+const productSchema = new Schema<IProduct>({
   name: {
     type: String,
     required: true,
-    trim: true
   },
   description: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
   price: {
     type: Number,
@@ -22,17 +28,18 @@ const productSchema = new Schema<IProductDocument>({
   category: {
     type: String,
     required: true,
-    trim: true
+  },
+  stock: {
+    type: Number,
+    required: true,
+    min: 0
   }
 }, {
   timestamps: true
 });
 
-// Create indexes for filtering and searching
-productSchema.index({ name: 'text', description: 'text' });
+// Indexes for better query performance
 productSchema.index({ category: 1 });
 productSchema.index({ price: 1 });
 
-export const Product = mongoose.model<IProductDocument>('Product', productSchema);
-
-export default Product; 
+export const Product = mongoose.model<IProduct>('Product', productSchema); 
